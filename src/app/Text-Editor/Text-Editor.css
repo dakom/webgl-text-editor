@@ -1,0 +1,15 @@
+.textEditor-wrapper {
+    height: 100vh;
+    width: 50vw;
+    background-color: white;
+    overflow-y: hidden;
+}
+
+
+.textEditor-toolbar-color > img {
+    width: 20px;
+    height: 20px;
+    margin: 5px;
+    cursor: pointer;
+}
+
