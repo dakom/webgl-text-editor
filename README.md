@@ -4,3 +4,8 @@
 
 ## [Live Demo](https://dakom.github.io/webgl-text-editor)
 
+## Status
+
+For now, sortof abandoned... I couldn't get proper cropping and bidirectional text to work.
+
+The project as committed is a decent starting point though. The fixing to be done is in [Draft-Utils.ts](src/app/utils/draft/Draft-Utils.ts)

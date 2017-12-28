@@ -8,13 +8,8 @@ const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 module.exports = merge(common, {
     devtool: "source-map",
     plugins: [
-       
-            /*Broken for now...
-
-          new UglifyJSPlugin({
-              sourceMap: true,
-          }),
-          */
-          
+        new UglifyJSPlugin({
+            sourceMap: true,
+        }),          
     ]
 });
