@@ -6,7 +6,7 @@ import {TextEditor} from "./components/Text-Editor/Text-Editor";
 import {WebGlDisplay} from "./components/WebGl-Display/WebGl-Display";
 import {getStateFromHtml} from "./utils/draft/Draft-Utils";
 
-const initialEditorState = getStateFromHtml(`<b>Hello</b>, <i>World</i><br/ ><br />`)
+const initialEditorState = getStateFromHtml(`<b>Hello</b>, <i>בְּרֵאשִׁ֖ית</i><br/ ><br />`)
 const eventListeners = [];
 
 const MainPage = 
