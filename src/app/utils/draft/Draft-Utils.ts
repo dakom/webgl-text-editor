@@ -31,18 +31,19 @@ export const getCanvasFromEditor = (editorState:EditorState):HTMLCanvasElement =
         const text = block.getText();
         let isRtl:boolean;
         let textWidth:number;
-
-        let font = {
-            style: 'normal',
-            variant: 'normal',
-            weight: 'normal',
-            size: 48,
-            family: 'Times New Roman',
-        }
+        let fontSize = 48;
+        
 
         block.findStyleRanges(() => true, (start, end) => {
             const str = text.substring(start, end);
             isRtl = stringIsRtl(str);
+
+            let font = {
+                style: 'normal',
+                variant: 'normal',
+                weight: 'normal',
+                family: 'Times New Roman',
+            }
 
             block.getInlineStyleAt(start).forEach(style => {
                 switch(style) {
@@ -52,14 +53,14 @@ export const getCanvasFromEditor = (editorState:EditorState):HTMLCanvasElement =
                 }
             });
 
-            ctx.font = `${font.style} ${font.variant} ${font.weight} ${font.size}px ${font.family}`;
+            ctx.font = `${font.style} ${font.variant} ${font.weight} ${fontSize}px ${font.family}`;
             textWidth = ctx.measureText(str).width;
 
             if(pos.x === null) {
                 pos.x = isRtl ? (canvasElement.width - textWidth) : 0;
             }
             if(pos.y === null) {
-                pos.y = font.size;
+                pos.y = fontSize;
             }
             
             ctx.fillText(str, pos.x, pos.y);
@@ -67,7 +68,7 @@ export const getCanvasFromEditor = (editorState:EditorState):HTMLCanvasElement =
             pos.x += isRtl ? (textWidth * -1) : textWidth;
         });
 
-        pos.y += font.size;
+        pos.y += fontSize;
         pos.x = null;
     });
   
