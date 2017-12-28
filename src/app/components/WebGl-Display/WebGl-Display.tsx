@@ -2,10 +2,12 @@ import * as R from 'ramda';
 import * as React from 'react';
 import { ContentState, convertFromHTML, convertToRaw, EditorState } from 'draft-js';
 import "./WebGl-Display.css";
-import {CompileShader} from "../utils/webgl/WebGl-Shader";
+import {getCanvasFromEditor} from "../../utils/draft/Draft-Utils";
+import {CompileShader} from "../../utils/webgl/WebGl-Shader";
+import {makeTextureFactory} from "../../utils/webgl/WebGl-Texture";
 import {program as texturedQuadVertex} from './shader-vertex';
 import {program as texturedQuadFragment} from './shader-fragment';
-import {makeDrawer, DrawArguments} from "./Draw";
+import {makeRenderer, RenderData} from "./Renderer";
 import {mat4} from "gl-matrix";
 
 //Main component
@@ -14,10 +16,8 @@ interface WebGlDisplayProps {
     eventListeners: Array<(editorState:EditorState) => void>;
 }
 
-interface WebGlDisplayState {
-    editorState: EditorState;
-    transformMatrix: Float32Array;
-}
+type WebGlDisplayState = RenderData;
+
 
 const getCanvasSize = ():{width:number, height:number} => {
     //might want to get these from the actual canvas element?
@@ -40,47 +40,45 @@ const getTransformMatrix = ():Float32Array => {
 
 }
 
+
 export class WebGlDisplay extends React.Component<WebGlDisplayProps, WebGlDisplayState> {
     private gl:WebGLRenderingContext;
     private canvasElement:HTMLCanvasElement;
 
-    private draw:({editorState, transformMatrix}:DrawArguments) => void;
+    private renderShader:(renderData:RenderData) => void;
 
     constructor(props) {
         super(props);
 
         this.state = {
-            editorState: props.editorState,
+            texture: null,
             transformMatrix: getTransformMatrix()
         }
-     
-        this.updateTexture = this.updateTexture.bind(this);
-
-        this.props.eventListeners.push(editorState => 
-            this.setState({
-                editorState: editorState   
-            })
-        );
     }
 
     componentDidMount() {
+        //context and element setup
         const canvasElement = this.canvasElement;
 
         const gl = (canvasElement.getContext("webgl") as WebGLRenderingContext) || (canvasElement.getContext("experimental-webgl") as WebGLRenderingContext);
         this.gl = gl;
 
+        //Initial WebGL setup
         const program = CompileShader (gl) ({
             vertex: texturedQuadVertex,
             fragment: texturedQuadFragment
         });
 
-        //Initial WebGL setup
         gl.clearColor(1,0,0,1);
         gl.useProgram(program);
-        this.draw = makeDrawer (gl) (program);
+        this.renderShader = makeRenderer (gl) (program);
+        const textureFactory = makeTextureFactory (gl) ({alpha: true, mips: false});
 
-        //Handle resize and first draw
-        const onResize =  () => {
+        //Utility functions
+        const createTexture = editorState => 
+            textureFactory(getCanvasFromEditor(editorState));
+
+        const resize = ():Float32Array => {
             const {width, height} = getCanvasSize();
             
             canvasElement.setAttribute('width', width.toString());
@@ -88,30 +86,39 @@ export class WebGlDisplay extends React.Component<WebGlDisplayProps, WebGlDispla
 
             gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
-            this.setState({
-                transformMatrix: getTransformMatrix()
-            });
+            return getTransformMatrix()
         }
 
-        window.addEventListener("resize", onResize, false);
+        //Event handlers
+        this.props.eventListeners.push(editorState => 
+            this.setState({
+                texture: createTexture(editorState)
+            })
+        );
+
+        window.addEventListener(
+            "resize", 
+            evt => this.setState({
+                transformMatrix: resize()
+            }), 
+            false
+        );
 
         //First draw
-        onResize();
-        this.updateTexture();
+        this.setState({
+            transformMatrix: resize(),
+            texture: createTexture(this.props.editorState)
+        });
     }
 
     componentDidUpdate(prevProps, prevState) {
-        this.updateTexture();
-    }
-
-    updateTexture() {
         const gl = this.gl;
 
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        this.draw({
-            editorState: this.state.editorState,
-            transformMatrix: this.state.transformMatrix
+        this.renderShader({
+            transformMatrix: this.state.transformMatrix,
+            texture: this.state.texture
         });
     }
 

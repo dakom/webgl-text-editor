@@ -1,5 +1,5 @@
 import * as R from "ramda";
-import {S} from "../utils/sanctuary/Sanctuary";
+import {S} from "../../utils/sanctuary/Sanctuary";
 import { ContentState, convertFromHTML, convertToRaw, EditorState } from 'draft-js';
 import {mat4} from "gl-matrix";
 
@@ -12,16 +12,16 @@ interface TextureInfo {
     isReady?:boolean;
 }
 
-const getTransformMatrix = () => {
+export interface RenderData {
+    transformMatrix:Float32Array,
+    texture:WebGLTexture
+};
 
-}
-
-export type DrawArguments = {editorState:EditorState, transformMatrix:Float32Array};
-
-export const makeDrawer = gl => program => {
+export const makeRenderer = gl => program => {
     const uSize = gl.getUniformLocation(program, "u_Size");
     const uTransform = gl.getUniformLocation(program, "u_Transform");
     const uColor = gl.getUniformLocation(program, "u_Color");
+    const uSampler = gl.getUniformLocation(program, "u_Sampler");
     const aVertex = gl.getAttribLocation(program, "a_Vertex");
     const sizeMatrix = mat4.create();
     
@@ -38,32 +38,32 @@ export const makeDrawer = gl => program => {
         gl.STATIC_DRAW
     );
 
-    return ({editorState, transformMatrix}:DrawArguments) => {
+    return (renderData:RenderData) => {
+        const {texture, transformMatrix} = renderData;
+
         const width = 200;
         const height = 100;
 
+        //Set the scaling matrix based on world dimensions
         mat4.fromScaling(sizeMatrix, [width, height, 1]);
 
+        //Assign the uniforms
         gl.uniformMatrix4fv(uSize, false, sizeMatrix);
         gl.uniformMatrix4fv(uTransform, false, transformMatrix);
 
+        //Assi
         gl.vertexAttribPointer(aVertex, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(aVertex);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferId);
     
-        gl.uniform4fv(uColor, Float32Array.from([0.0, 1.0, 0.0, 1.0]));
+        //just make it a solid color, for testing
+        //gl.uniform4fv(uColor, Float32Array.from([0.0, 1.0, 0.0, 1.0]));
 
-        console.log("drew color o_O");
-
-/*
-    if(isTexture) {
-        io.output.webgl.switchTextureUrl(props.url) (gl.TEXTURE0);
-        gl.uniform1i(uniform("u_Sampler"), 0);
-        gl.uniform4fv(uniform("u_HitColor"), emptyPixel);
-    } else {
-        gl.uniform4fv(uniform("u_Color"), Float32Array.from(props.color));
-    }
-  */  
+        //Render the texture
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(uSampler, 0);
+        
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 }

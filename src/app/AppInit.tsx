@@ -2,8 +2,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './App.css';
-import {TextEditor} from "./Text-Editor/Text-Editor";
-import {WebGlDisplay} from "./WebGl-Display/WebGl-Display";
+import {TextEditor} from "./components/Text-Editor/Text-Editor";
+import {WebGlDisplay} from "./components/WebGl-Display/WebGl-Display";
 import {getStateFromHtml} from "./utils/draft/Draft-Utils";
 
 const initialEditorState = getStateFromHtml(`<b>Hello</b>, <i>World</i><br/ ><br />`)
