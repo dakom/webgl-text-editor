@@ -6,6 +6,18 @@
 
 ## Status
 
-For now, sortof abandoned... I couldn't get proper cropping and bidirectional text to work.
+Pretty much working now, albeit at a very basic level :)
 
-The project as committed is a decent starting point though. The fixing to be done is in [Draft-Utils.ts](src/app/utils/draft/Draft-Utils.ts)
+## TODO
+
+* Size the canvas element based on the final actual dimensions
+* Add font-family dropdown option to menu
+* Add font-size dropdown option to menu
+* Add color picker to menu
+
+## NOTES
+
+Canvas text can do a whole bunch of fancy things that the text editor can't show. In this demo, there could be menu options for those since there's a left/right split... but on a real app, not sure how that would be displayed. Same goes for WebGL effects.
+
+
+
