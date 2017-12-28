@@ -1,39 +1,125 @@
 import * as React from 'react';
-import { EditorState } from 'draft-js';
-import { Editor } from 'react-draft-wysiwyg';
-
-import '../../../../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import { Editor, EditorState, RichUtils, ContentBlock, DraftHandleValue } from 'draft-js';
 import './Text-Editor.css';
 
-//Toolbar
-class OutlineOption extends React.Component {
-    render() {
-      return (
-        <div onClick={() => {
-          console.log("outline clicked!");
-        }}>
-          Outline
-        </div>
-      );
+
+// Custom overrides for "code" style.
+const styleMap = {
+    CODE: {
+        backgroundColor: 'rgba(0, 0, 0, 0.05)',
+        fontFamily: '"Inconsolata", "Menlo", "Consolas", monospace',
+        fontSize: 16,
+        padding: 2,
+    },
+};
+
+const getBlockStyle = (block:ContentBlock):string => {
+    switch (block.getType()) {
+        case 'blockquote': return 'RichEditor-blockquote';
+        default: return null;
     }
 }
 
-const ToolbarOptions = {
-  colorPicker: { 
-    icon: `data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiCgkgdmlld0JveD0iMCAwIDQ5NS41NzggNDk1LjU3OCIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNDk1LjU3OCA0OTUuNTc4OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxnPgoJPGc+CgkJPHBhdGggc3R5bGU9ImZpbGw6I0U2QkU5NDsiIGQ9Ik00MzkuMjA4LDIxNS41NzhjLTQ2Ljk3NS01My41MjktOTYtNjUuOTczLTk2LTEyNWMwLTY0LjMzMy01NC4zMzMtMTEzLjY2Ny0xNDkuNDI5LTc5LjMyMQoJCQlDOTEuODE2LDQ4LjA4MywyMS4yMDgsMTM2LjkxMSwyMS4yMDgsMjQ3LjU3OGMwLDEzNi45NjYsMTExLjAzMywyNDgsMjQ4LDI0OGMyMi41MjcsMCw0NC4zNTQtMy4wMDQsNjUuMDk5LTguNjMybC0wLjAwNi0wLjAyNgoJCQlDNDM5LjIwOCw0NTYuNTc4LDUyNS4yMDgsMzEzLjU3OCw0MzkuMjA4LDIxNS41Nzh6IE0zMzMuNzA5LDE4OS42OWMtMTQuNTAxLDE4LjU1NS01NC42NjgsNy43MDctNzAuMTctMTguNTQ3CgkJCWMtMTMuNjY0LTIzLjE0LTguNjY0LTU2LjIzMiwxNC45ODgtNzAuODIyYzEzLjcxLTguNDU3LDMxLjc5MS0wLjEzNSwzNS4yMzEsMTUuNjAyYzIuOCwxMi44MDYsOC41NDMsMjguNjcxLDIwLjIzOSw0My4xODcKCQkJQzM0MS4xMjUsMTY3Ljk2LDM0MC43MDcsMTgwLjczNiwzMzMuNzA5LDE4OS42OXoiLz4KCTwvZz4KCTxnPgoJCTxjaXJjbGUgc3R5bGU9ImZpbGw6I0ZGNEYxOTsiIGN4PSIxNjUuMDk4IiBjeT0iMTM1LjY4OCIgcj0iNDcuODkiLz4KCTwvZz4KCTxnPgoJCTxjaXJjbGUgc3R5bGU9ImZpbGw6I0ZGOEM2MjsiIGN4PSIxNzYuOTQiIGN5PSIxMjMuNzE1IiByPSIxNi43NjIiLz4KCTwvZz4KCTxnPgoJCTxjaXJjbGUgc3R5bGU9ImZpbGw6I0ZGQ0QwMDsiIGN4PSIxMTcuMDk4IiBjeT0iMjU1LjY4OCIgcj0iNDcuODkiLz4KCTwvZz4KCTxnPgoJCTxjaXJjbGUgc3R5bGU9ImZpbGw6I0ZGRTY3MTsiIGN4PSIxMjguOTQiIGN5PSIyNDMuNzE1IiByPSIxNi43NjIiLz4KCTwvZz4KCTxnPgoJCTxjaXJjbGUgc3R5bGU9ImZpbGw6IzAwQzM3QTsiIGN4PSIxNzIuODc5IiBjeT0iMzY3LjQ2OSIgcj0iNDcuODkiLz4KCTwvZz4KCTxnPgoJCTxjaXJjbGUgc3R5bGU9ImZpbGw6IzYwREM0RDsiIGN4PSIxODQuNzIiIGN5PSIzNTUuNDk2IiByPSIxNi43NjIiLz4KCTwvZz4KCTxnPgoJCTxjaXJjbGUgc3R5bGU9ImZpbGw6IzRDRDdGRjsiIGN4PSIyOTMuMDk4IiBjeT0iNDA3LjY4OCIgcj0iNDcuODkiLz4KCTwvZz4KCTxnPgoJCTxjaXJjbGUgc3R5bGU9ImZpbGw6I0FFRUZGRjsiIGN4PSIzMDQuOTM5IiBjeT0iMzk1LjcxNSIgcj0iMTYuNzYyIi8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIHN0eWxlPSJmaWxsOiMwMDlCQ0E7IiBjeD0iMzgxLjA5OCIgY3k9IjMxOS40NjkiIHI9IjQ3Ljg5Ii8+Cgk8L2c+Cgk8Zz4KCQk8Y2lyY2xlIHN0eWxlPSJmaWxsOiM0Q0Q3RkY7IiBjeD0iMzkyLjkzOSIgY3k9IjMwNy40OTYiIHI9IjE2Ljc2MiIvPgoJPC9nPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=`,
-    className: "textEditor-toolbar-color"
-  },
+interface StyleButtonProps {
+    onToggle: (style:any) => void;
 }
+class StyleButton extends React.Component<any, StyleButtonProps> {
+    constructor(props) {
+        super(props);
+        this.onToggle = this.onToggle.bind(this);
+    }
+
+    onToggle(e) {
+        e.preventDefault();
+        this.props.onToggle(this.props.style);
+    };
+
+    render() {
+        let className = 'RichEditor-styleButton';
+        if (this.props.active) {
+            className += ' RichEditor-activeButton';
+        }
+
+        return (
+            <span className={className} onMouseDown={this.onToggle}>
+                {this.props.label}
+            </span>
+        );
+    }
+}
+
+const BLOCK_TYPES = [
+    { label: 'H1', style: 'header-one' },
+    { label: 'H2', style: 'header-two' },
+    { label: 'H3', style: 'header-three' },
+    { label: 'H4', style: 'header-four' },
+    { label: 'H5', style: 'header-five' },
+    { label: 'H6', style: 'header-six' },
+    { label: 'Blockquote', style: 'blockquote' },
+    { label: 'UL', style: 'unordered-list-item' },
+    { label: 'OL', style: 'ordered-list-item' },
+    { label: 'Code Block', style: 'code-block' },
+];
+
+const BlockStyleControls = (props) => {
+    const { editorState } = props;
+    const selection = editorState.getSelection();
+    const blockType = editorState
+        .getCurrentContent()
+        .getBlockForKey(selection.getStartKey())
+        .getType();
+
+    return (
+        <div className="RichEditor-controls">
+            {BLOCK_TYPES.map((type) =>
+                <StyleButton
+                    key={type.label}
+                    active={type.style === blockType}
+                    label={type.label}
+                    onToggle={props.onToggle}
+                    style={type.style}
+                />
+            )}
+        </div>
+    );
+};
+
+var INLINE_STYLES = [
+    { label: 'Bold', style: 'BOLD' },
+    { label: 'Italic', style: 'ITALIC' },
+    { label: 'Underline', style: 'UNDERLINE' },
+    { label: 'Monospace', style: 'CODE' },
+];
+
+const InlineStyleControls = (props) => {
+    var currentStyle = props.editorState.getCurrentInlineStyle();
+    return (
+        <div className="RichEditor-controls">
+            {INLINE_STYLES.map(type =>
+                <StyleButton
+                    key={type.label}
+                    active={currentStyle.has(type.style)}
+                    label={type.label}
+                    onToggle={props.onToggle}
+                    style={type.style}
+                />
+            )}
+        </div>
+    );
+};
 
 //Main component
 interface TextEditorProps {
     editorState: EditorState;
-    onEditorChanged: (editorState:EditorState) => void;
-    eventListeners: Array<(editorState:EditorState) => void>;
+    onEditorChanged: (editorState: EditorState) => void;
+    eventListeners: Array<(editorState: EditorState) => void>;
 }
 
 export class TextEditor extends React.Component<TextEditorProps, any> {
+    private focus: () => void;
+    private onChange: (editorState: EditorState) => void;
 
+    private editor: Editor;
     constructor(props) {
         super(props);
 
@@ -41,23 +127,90 @@ export class TextEditor extends React.Component<TextEditorProps, any> {
             editorState: props.editorState
         }
 
-        this.props.eventListeners.push(editorState => 
+        this.props.eventListeners.push(editorState =>
             this.setState({
-                editorState: editorState   
+                editorState: editorState
             })
+        );
+
+        this.focus = () => this.editor.focus();
+        this.onChange = this.props.onEditorChanged;
+        this.handleKeyCommand = this.handleKeyCommand.bind(this);
+        this.onTab = this.onTab.bind(this);
+        this.toggleBlockType = this.toggleBlockType.bind(this);
+        this.toggleInlineStyle = this.toggleInlineStyle.bind(this);
+    }
+
+    handleKeyCommand(command, editorState):DraftHandleValue {
+        const newState = RichUtils.handleKeyCommand(editorState, command);
+        if (newState) {
+            this.onChange(newState);
+            return 'handled';
+        }
+        return 'not-handled';
+    }
+
+    onTab(e) {
+        const maxDepth = 4;
+        this.onChange(RichUtils.onTab(e, this.state.editorState, maxDepth));
+    }
+
+    toggleBlockType(blockType) {
+        this.onChange(
+            RichUtils.toggleBlockType(
+                this.state.editorState,
+                blockType
+            )
+        );
+    }
+
+    toggleInlineStyle(inlineStyle) {
+        this.onChange(
+            RichUtils.toggleInlineStyle(
+                this.state.editorState,
+                inlineStyle
+            )
         );
     }
 
     render() {
-        return <Editor
-            editorState={this.state.editorState}
-            wrapperClassName="textEditor-wrapper"
-            editorClassName="textEditor-editor"
-            onEditorStateChange={this.props.onEditorChanged}
-            toolbar={ToolbarOptions}
-            toolbarCustomButtons={[
-                <OutlineOption />
-            ]}
-        />
+        const { editorState } = this.state;
+
+        // If the user changes block type before entering any text, we can
+        // either style the placeholder or hide it. Let's just hide it now.
+        let className = 'RichEditor-editor';
+        const contentState = editorState.getCurrentContent();
+        if (!contentState.hasText()) {
+            if (contentState.getBlockMap().first().getType() !== 'unstyled') {
+                className += ' RichEditor-hidePlaceholder';
+            }
+        }
+
+        return (
+            <div className="RichEditor-container RichEditor-root">
+                <BlockStyleControls
+                    editorState={editorState}
+                    onToggle={this.toggleBlockType}
+                />
+                <InlineStyleControls
+                    editorState={editorState}
+                    onToggle={this.toggleInlineStyle}
+                />
+                <div className={className} onClick={this.focus}>
+                    <Editor
+                        editorState={editorState}
+                        onChange={this.onChange}
+                        placeholder="Tell a story..."
+                        blockStyleFn={getBlockStyle}
+                        customStyleMap={styleMap}
+                        handleKeyCommand={this.handleKeyCommand}
+                        onTab={this.onTab}
+                        ref={editor => this.editor = editor}
+                        spellCheck={true}
+                    />
+                </div>
+            </div>
+        )
     }
 }
+

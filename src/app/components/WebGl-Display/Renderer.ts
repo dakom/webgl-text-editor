@@ -14,7 +14,9 @@ interface TextureInfo {
 
 export interface RenderData {
     transformMatrix:Float32Array,
-    texture:WebGLTexture
+    texture:WebGLTexture,
+    width: number,
+    height:number
 };
 
 export const makeRenderer = gl => program => {
@@ -39,11 +41,10 @@ export const makeRenderer = gl => program => {
     );
 
     return (renderData:RenderData) => {
-        const {texture, transformMatrix} = renderData;
+        const {texture, transformMatrix, width, height} = renderData;
 
-        const width = 200;
-        const height = 100;
-
+        console.log(width, height);
+        
         //Set the scaling matrix based on world dimensions
         mat4.fromScaling(sizeMatrix, [width, height, 1]);
 

@@ -9,9 +9,12 @@ module.exports = merge(common, {
     devtool: "source-map",
     plugins: [
        
+            /*Broken for now...
+
           new UglifyJSPlugin({
-              sourceMap: true
+              sourceMap: true,
           }),
+          */
           
     ]
 });

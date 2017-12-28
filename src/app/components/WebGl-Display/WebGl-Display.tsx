@@ -16,7 +16,7 @@ interface WebGlDisplayProps {
     eventListeners: Array<(editorState:EditorState) => void>;
 }
 
-type WebGlDisplayState = RenderData;
+type WebGlDisplayState = Partial<RenderData>;
 
 
 const getCanvasSize = ():{width:number, height:number} => {
@@ -34,7 +34,7 @@ const getTransformMatrix = ():Float32Array => {
     const eye = mat4.create();
     const camera = mat4.multiply(mat4.create(), projection, eye);
 
-    const world = mat4.fromTranslation(mat4.create(), [width/2, height/2, 0]);
+    const world = mat4.fromTranslation(mat4.create(), [0,0, 0]);
 
     return mat4.multiply(mat4.create(), camera, world);
 
@@ -50,10 +50,7 @@ export class WebGlDisplay extends React.Component<WebGlDisplayProps, WebGlDispla
     constructor(props) {
         super(props);
 
-        this.state = {
-            texture: null,
-            transformMatrix: getTransformMatrix()
-        }
+        this.state = {};
     }
 
     componentDidMount() {
@@ -75,8 +72,18 @@ export class WebGlDisplay extends React.Component<WebGlDisplayProps, WebGlDispla
         const textureFactory = makeTextureFactory (gl) ({alpha: true, mips: false});
 
         //Utility functions
-        const createTexture = editorState => 
-            textureFactory(getCanvasFromEditor(editorState));
+        const createTexture = editorState => {
+            const canvas = getCanvasFromEditor(editorState);
+            const texture = textureFactory(canvas);
+
+            
+            return {
+                texture: texture,
+                width: canvas.width,
+                height: canvas.height
+            }
+        }
+            
 
         const resize = ():Float32Array => {
             const {width, height} = getCanvasSize();
@@ -91,9 +98,7 @@ export class WebGlDisplay extends React.Component<WebGlDisplayProps, WebGlDispla
 
         //Event handlers
         this.props.eventListeners.push(editorState => 
-            this.setState({
-                texture: createTexture(editorState)
-            })
+            this.setState({...createTexture(editorState)})
         );
 
         window.addEventListener(
@@ -105,10 +110,10 @@ export class WebGlDisplay extends React.Component<WebGlDisplayProps, WebGlDispla
         );
 
         //First draw
-        this.setState({
-            transformMatrix: resize(),
-            texture: createTexture(this.props.editorState)
-        });
+        this.setState(Object.assign({}, 
+            {...createTexture(this.props.editorState)}, 
+            { transformMatrix: resize() }
+        ));
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -116,10 +121,7 @@ export class WebGlDisplay extends React.Component<WebGlDisplayProps, WebGlDispla
 
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        this.renderShader({
-            transformMatrix: this.state.transformMatrix,
-            texture: this.state.texture
-        });
+        this.renderShader(this.state as RenderData);
     }
 
     render() {
