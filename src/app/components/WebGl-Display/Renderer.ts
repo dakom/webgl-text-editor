@@ -3,9 +3,6 @@ import {S} from "../../utils/sanctuary/Sanctuary";
 import { ContentState, convertFromHTML, convertToRaw, EditorState } from 'draft-js';
 import {mat4} from "gl-matrix";
 
-const emptyPixel = Float32Array.from([0.0,0.0,0.0,0.0]);
-
-
 interface TextureInfo {
     isTexture:boolean;
     data?:string;
@@ -52,7 +49,7 @@ export const makeRenderer = gl => program => {
         gl.uniformMatrix4fv(uSize, false, sizeMatrix);
         gl.uniformMatrix4fv(uTransform, false, transformMatrix);
 
-        //Assi
+        //Assign the geometry
         gl.vertexAttribPointer(aVertex, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(aVertex);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferId);
@@ -60,11 +57,12 @@ export const makeRenderer = gl => program => {
         //just make it a solid color, for testing
         //gl.uniform4fv(uColor, Float32Array.from([0.0, 1.0, 0.0, 1.0]));
 
-        //Render the texture
+        //Assign the texture
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.uniform1i(uSampler, 0);
         
+        //Render!
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 }
