@@ -11,6 +11,11 @@ export const getStateFromHtml = htmlString => {
         blocksFromHTML.entityMap
     );
 
+    blocksFromHTML.contentBlocks.forEach(block => block.getInlineStyleAt(2).forEach(style => {
+        console.log(style);
+
+    }));
+    
     return EditorState.createWithContent(contentState);
 }
 
@@ -31,7 +36,7 @@ export const getCanvasFromEditor = (editorState:EditorState):HTMLCanvasElement =
         const text = block.getText();
         let isRtl:boolean;
         let textWidth:number;
-        let fontSize = 48;
+        let fontSize = 16;
         
 
         block.findStyleRanges(() => true, (start, end) => {
@@ -42,14 +47,20 @@ export const getCanvasFromEditor = (editorState:EditorState):HTMLCanvasElement =
                 style: 'normal',
                 variant: 'normal',
                 weight: 'normal',
-                family: 'Times New Roman',
+                family: 'serif',
             }
 
             block.getInlineStyleAt(start).forEach(style => {
-                switch(style) {
-                    case "ITALIC": font.style = 'italic'; break;
-                    case "BOLD": font.weight = 'bold'; break;
-                    default: console.log(style);
+                if(style.indexOf("fontFamily-") === 0) {
+                    font.family = style.substring(11); //strip off the prefix
+                } else if(style.indexOf("fontSize-") === 0) {
+                    fontSize = parseInt(style.substring(9), 10); //strip off the prefix
+                } else {
+                    switch(style) {
+                        case "ITALIC": font.style = 'italic'; break;
+                        case "BOLD": font.weight = 'bold'; break;
+                        default: console.log(style);
+                    }
                 }
             });
 
@@ -57,7 +68,8 @@ export const getCanvasFromEditor = (editorState:EditorState):HTMLCanvasElement =
             textWidth = ctx.measureText(str).width;
 
             if(pos.x === null) {
-                pos.x = isRtl ? (canvasElement.width - textWidth) : 0;
+                //should actually be based on alignment settings...
+                pos.x = 0;
             }
             if(pos.y === null) {
                 pos.y = fontSize;
@@ -68,7 +80,7 @@ export const getCanvasFromEditor = (editorState:EditorState):HTMLCanvasElement =
             pos.x += isRtl ? (textWidth * -1) : textWidth;
         });
 
-        pos.y += fontSize;
+        pos.y += fontSize * 1.2;
         pos.x = null;
     });
   

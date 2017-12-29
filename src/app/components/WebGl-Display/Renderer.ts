@@ -40,7 +40,7 @@ export const makeRenderer = gl => program => {
     return (renderData:RenderData) => {
         const {texture, transformMatrix, width, height} = renderData;
 
-        console.log(width, height);
+        //console.log(width, height);
         
         //Set the scaling matrix based on world dimensions
         mat4.fromScaling(sizeMatrix, [width, height, 1]);

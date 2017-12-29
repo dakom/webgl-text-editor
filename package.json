@@ -31,7 +31,7 @@
     "@types/chai": "4.0.10",
     "@types/draft-js": "0.10.19",
     "@types/gl-matrix": "2.4.0",
-    "@types/jest": "21.1.10",
+    "@types/jest": "22.0.0",
     "@types/node": "8.5.2",
     "@types/react": "16.0.31",
     "@types/react-dom": "16.0.3",
@@ -58,10 +58,13 @@
     "ts-jest": "22.0.0",
     "ts-node": "4.1.0",
     "typescript": "2.6.2",
-    "uglify-js": "3.3.2",
+    "uglify-js": "3.3.3",
     "uglifyjs-webpack-plugin": "1.1.5",
     "webpack": "3.10.0",
     "webpack-dev-server": "2.9.7",
     "webpack-merge": "4.1.1"
+  },
+  "dependencies": {
+    "react-select": "1.1.0"
   }
 }

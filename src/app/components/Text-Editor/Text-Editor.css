@@ -65,3 +65,16 @@
   .RichEditor-activeButton {
     color: #5890ff;
   }
+
+  .RichEditor-controls-fontSelect, .RichEditor-controls-sizeSelect {
+    display: block;
+  }
+  
+  .RichEditor-controls-fontSelect {
+    width: 200px;
+    margin-right: 10px;
+  }
+
+  .RichEditor-controls-sizeSelect {
+    width: 70px;
+  }
